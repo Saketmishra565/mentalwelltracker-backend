@@ -2,6 +2,18 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import date
 
+# After signup
+class SignupResponse(BaseModel):
+    message: str
+    email: EmailStr
+
+class VerifyRequest(BaseModel):
+    token: str
+
+class ResendRequest(BaseModel):
+    email: EmailStr
+
+
 class EducationInfo(BaseModel):
     degree: Optional[str]
     institution: Optional[str]
@@ -18,13 +30,15 @@ class ImportantDate(BaseModel):
     class Config:
         from_attributes = True
 
+
 class DailyRoutine(BaseModel):
-    wake_up_time: Optional[str]  # "06:30 AM"
-    sleep_time: Optional[str]    # "10:30 PM"
+    wake_up_time: Optional[str]  # e.g. "06:30 AM"
+    sleep_time: Optional[str]    # e.g. "10:30 PM"
     activities: Optional[List[str]]
 
     class Config:
         from_attributes = True
+
 
 class MedicalInfo(BaseModel):
     blood_group: Optional[str]
@@ -35,6 +49,7 @@ class MedicalInfo(BaseModel):
     class Config:
         from_attributes = True
 
+
 class FamilyInfo(BaseModel):
     father_name: Optional[str]
     mother_name: Optional[str]
@@ -43,6 +58,7 @@ class FamilyInfo(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class OccupationInfo(BaseModel):
     current_job: Optional[str]
@@ -54,6 +70,7 @@ class OccupationInfo(BaseModel):
     class Config:
         from_attributes = True
 
+
 class MaritalInfo(BaseModel):
     marital_status: Optional[str]
     life_partner_name: Optional[str]
@@ -62,25 +79,26 @@ class MaritalInfo(BaseModel):
     class Config:
         from_attributes = True
 
+
 class UserBase(BaseModel):
     username: str
     email: EmailStr
 
-class UserCreate(UserBase):
+class UserCreate(BaseModel):
+    email: EmailStr
     password: str
 
 class UserUpdate(BaseModel):
     username: Optional[str] = None
     email: Optional[EmailStr] = None
     password: Optional[str] = None
-    
-    # New optional fields for update
+
+    # Additional optional fields
     full_name: Optional[str] = None
     date_of_birth: Optional[date] = None
     gender: Optional[str] = None
     address: Optional[str] = None
-    
-    # Nested/related info as optional JSON-like dicts or lists
+
     family_information: Optional[FamilyInfo] = None
     occupation_information: Optional[OccupationInfo] = None
     hobbies: Optional[List[str]] = None
@@ -96,6 +114,9 @@ class UserUpdate(BaseModel):
     current_challenges: Optional[List[str]] = None
     important_dates: Optional[List[ImportantDate]] = None
     other_information: Optional[str] = None
+
+    class Config:
+        from_attributes = True
 
 class UserRead(UserBase):
     id: int
@@ -122,3 +143,4 @@ class UserRead(UserBase):
 
     class Config:
         from_attributes = True
+

@@ -27,10 +27,17 @@ def update_user(db: Session, user_id: int, update_data: UserUpdate):
     user = get_user_by_id(db, user_id)
     if not user:
         return None
+
+    # If password is provided, hash and update it
     if update_data.password:
         user.hashed_password = hash_password(update_data.password)
-    for key, value in update_data.dict(exclude_unset=True, exclude={"password"}).items():
+
+    # Update other fields except password
+    update_fields = update_data.dict(exclude_unset=True, exclude={"password"})
+
+    for key, value in update_fields.items():
         setattr(user, key, value)
+
     db.commit()
     db.refresh(user)
     return user

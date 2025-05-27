@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
+from app.database import get_db
 from app.schemas.reminder import ReminderCreate, ReminderRead, ReminderUpdate
 from app.services.reminder import (
     create_reminder,
@@ -10,7 +11,7 @@ from app.services.reminder import (
     update_reminder,
     delete_reminder,
 )
-from app.database import get_db
+from app.models.reminder import Reminder  # Reminder मॉडल इम्पोर्ट सही से
 
 router = APIRouter(prefix="/reminders", tags=["Reminders"])
 
@@ -36,9 +37,14 @@ def update_reminder_data(reminder_id: int, reminder_update: ReminderUpdate, db: 
         raise HTTPException(status_code=404, detail="Reminder not found")
     return updated_reminder
 
-@router.delete("/{reminder_id}", response_model=ReminderRead)
-def delete_reminder_data(reminder_id: int, db: Session = Depends(get_db)):
-    deleted_reminder = delete_reminder(db, reminder_id)
-    if not deleted_reminder:
+@router.delete("/{reminder_id}")
+def delete_reminder(reminder_id: int, db: Session = Depends(get_db)):
+    reminder = db.query(Reminder).filter(Reminder.id == reminder_id).first()
+    if not reminder:
         raise HTTPException(status_code=404, detail="Reminder not found")
-    return deleted_reminder
+
+    # Reminder से related sensitive data यहां मत access करो (जैसे user info)
+    db.delete(reminder)
+    db.commit()
+
+    return {"message": "Reminder deleted successfully"}

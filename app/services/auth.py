@@ -5,12 +5,18 @@ from app.auth.jwt import create_access_token
 from fastapi import HTTPException, status
 from datetime import timedelta
 
-ACCESS_TOKEN_EXPIRE_MINUTES = 60  # Token expire time (1 hour)
+ACCESS_TOKEN_EXPIRE_MINUTES = 60  # Token expiry time (1 hour)
 
 def login_user(db: Session, username: str, password: str):
     user = db.query(User).filter(User.username == username).first()
     if not user or not verify_password(password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password")
+
+    if not user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Please verify your email before logging in."
+        )
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(

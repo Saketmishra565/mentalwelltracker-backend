@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from app.models.base import Base
+from sqlalchemy import Column, Integer, String
 
 class MotivationBase(BaseModel):
     quote: str
@@ -9,12 +10,14 @@ class MotivationBase(BaseModel):
 class MotivationCreate(MotivationBase):
     pass
 
-class MotivationUpdate(BaseModel):
-    quote: Optional[str] = None
-    author: Optional[str] = None
+class Motivation(Base):
+    __tablename__ = "motivations"
+    id = Column(Integer, primary_key=True, index=True)
+    quote = Column(String, index=True)
+    author = Column(String)
 
 class MotivationRead(MotivationBase):
     id: int
 
     class Config:
-        from_attributes = True
+       from_attributes = True

@@ -41,9 +41,14 @@ def update_notification_endpoint(notification_id: int, update_data: Notification
     return updated
 
 # DELETE
-@router.delete("/{notification_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_notification_endpoint(notification_id: int, db: Session = Depends(get_db)):
-    deleted = delete_notification(db, notification_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Notification not found")
-    return None
+@router.delete("/notifications/user/{user_id}", summary="Delete all notifications for a user")
+def delete_notifications_by_user(user_id: int, db: Session = Depends(get_db)):
+    notifications = db.query(Notification).filter(Notification.user_id == user_id).all()
+    if not notifications:
+        raise HTTPException(status_code=404, detail="No notifications found for this user")
+
+    for notification in notifications:
+        db.delete(notification)
+    db.commit()
+    return {"message": f"All notifications for user {user_id} deleted successfully"}
+

@@ -4,6 +4,7 @@ from typing import List
 
 from app.database import get_db
 from app.schemas.tracking import TrackingCreate, TrackingRead, TrackingUpdate
+from app.models.tracking import Tracking
 from app.services.tracking import (
     track_activity,
     get_tracking_data,
@@ -36,9 +37,13 @@ def update_tracking_item(tracking_id: int, update_data: TrackingUpdate, db: Sess
         raise HTTPException(status_code=404, detail="Tracking item not found")
     return updated
 
-@router.delete("/item/{tracking_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_tracking_item(tracking_id: int, db: Session = Depends(get_db)):
-    deleted = delete_tracking(db, tracking_id)
-    if not deleted:
+@router.delete("/item/{item_id}")
+def delete_item(item_id: int, db: Session = Depends(get_db)):
+    item = db.query(Tracking).filter(Tracking.id == item_id).first()
+    if not item:
         raise HTTPException(status_code=404, detail="Tracking item not found")
-    return None
+    db.delete(item)
+    db.commit()
+    return {"message": "Item deleted successfully"}
+
+

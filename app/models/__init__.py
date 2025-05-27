@@ -16,5 +16,6 @@ from .other_information import OtherInformation
 from .past_incidents import PastIncident
 from .reminder import relationship
 from .tracking import Tracking
+from .reminder import Reminder
 
 # No Base import or definition here!

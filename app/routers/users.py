@@ -20,7 +20,7 @@ router = APIRouter(prefix="/users", tags=["Users Profile"])
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
     existing_user = get_user_by_username(db, user.username)
     if existing_user:
-        raise HTTPException(status_code=400, detail="Username already registered")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already registered")
     return create_user(db, user)
 
 # READ - List all users
@@ -33,7 +33,7 @@ def list_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
 def get_single_user(user_id: int, db: Session = Depends(get_db)):
     user = get_user_by_id(db, user_id)
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return user
 
 # UPDATE - Update user by ID
@@ -41,7 +41,7 @@ def get_single_user(user_id: int, db: Session = Depends(get_db)):
 def update_single_user(user_id: int, user_update: UserUpdate, db: Session = Depends(get_db)):
     updated_user = update_user(db, user_id, user_update)
     if not updated_user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return updated_user
 
 # DELETE - Delete user by ID
@@ -49,5 +49,5 @@ def update_single_user(user_id: int, user_update: UserUpdate, db: Session = Depe
 def delete_single_user(user_id: int, db: Session = Depends(get_db)):
     deleted_user = delete_user(db, user_id)
     if not deleted_user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return None

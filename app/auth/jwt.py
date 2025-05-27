@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 import jwt
 from jwt import ExpiredSignatureError, InvalidTokenError
+from fastapi import HTTPException, status
 
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback_secret_if_not_set")
 ALGORITHM = "HS256"
@@ -22,7 +23,7 @@ def decode_access_token(token: str):
         return payload
     except ExpiredSignatureError:
         logging.error("Token expired")
-        raise
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
     except InvalidTokenError:
         logging.error("Invalid token")
-        raise
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
