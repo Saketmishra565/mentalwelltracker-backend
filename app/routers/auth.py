@@ -1,28 +1,66 @@
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
+from datetime import timedelta
 import logging
 
 from app.schemas.auth import (
     UserLogin,
     UserRegister,
     ResetPassword,
-    LoginResponse
+    LoginResponse,
+    TokenSchema,
 )
-from app.schemas.user import VerifyRequest, ResendRequest
+from app.schemas.user import VerifyRequest
 from app.services.auth import login_user, register_user, reset_password
-from app.services.verification import (
-    create_verification_token_and_send_email,
-    verify_email_token,
-    resend_verification_email
-)
-
+from app.services.verification import create_otp_and_send_email, verify_otp
 from app.database import get_db
+from app.models.user import User
+from app.auth.jwt import create_access_token, create_refresh_token
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
-
 logger = logging.getLogger(__name__)
 
+ACCESS_TOKEN_EXPIRE_MINUTES = 15
+REFRESH_TOKEN_EXPIRE_DAYS = 7
 
+# ✅ Register
+@router.post("/register", response_model=TokenSchema, status_code=status.HTTP_201_CREATED)
+def register(
+    data: UserRegister,
+    db: Session = Depends(get_db),
+    background_tasks: BackgroundTasks = None,
+):
+    try:
+        user = register_user(db, data.username, data.email, data.password)
+
+        # Send OTP via email
+        create_otp_and_send_email(db, user.email, background_tasks)
+
+        # Tokens
+        access_token = create_access_token(
+        data={"sub": user.email},
+        expires_delta=timedelta(minutes=30)  # 30 minutes expiry token
+        )
+        refresh_token = create_refresh_token(
+            data={"sub": user.email},
+            expires_delta=timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
+        )
+
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "message": "Verification code sent via email. Please verify your account.",
+        }
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        logger.error(f"Error in /register: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+# ✅ Login
 @router.post("/login", response_model=LoginResponse)
 def login(data: UserLogin, db: Session = Depends(get_db)):
     try:
@@ -31,30 +69,10 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
         raise e
     except Exception as e:
         logger.error(f"Error in /login: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal Server Error",
-        )
-
-@router.post("/register", status_code=status.HTTP_201_CREATED)
-def register(data: UserRegister, db: Session = Depends(get_db), background_tasks: BackgroundTasks = None):
-    try:
-        user = register_user(db, data.username, data.email, data.password)
-
-        # Send verification email using background tasks
-        create_verification_token_and_send_email(db, user, background_tasks)
-
-        return {"message": "Verification email sent. Please verify your account."}
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        logger.error(f"Error in /register: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal Server Error",
-        )
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
+# ✅ Reset Password
 @router.post("/reset-password", status_code=status.HTTP_200_OK)
 def reset_user_password(data: ResetPassword, db: Session = Depends(get_db)):
     try:
@@ -63,46 +81,35 @@ def reset_user_password(data: ResetPassword, db: Session = Depends(get_db)):
         raise e
     except Exception as e:
         logger.error(f"Error in /reset-password: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal Server Error",
-        )
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
-@router.post("/verify-email")
-def verify_email(req: VerifyRequest, db: Session = Depends(get_db)):
+# ✅ Verify OTP (token format: "email:otp")
+@router.post("/verify-otp")
+def verify_email_otp(data: VerifyRequest, db: Session = Depends(get_db)):
     try:
-        verify_email_token(db, req.token)
-        return {"message": "Email verified successfully."}
+        token_parts = data.token.split(":")
+        if len(token_parts) != 2:
+            raise HTTPException(status_code=400, detail="Invalid token format")
+
+        email, otp = token_parts
+        result = verify_otp(db, email, otp)
+        return result
+
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(f"Error in /verify-email: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal Server Error",
-        )
+        logger.error(f"Error in /verify-otp: {e}", exc_info=True)
+        raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/resend-verification")
-def resend_verification(req: ResendRequest, db: Session = Depends(get_db), background_tasks: BackgroundTasks = None):
-    try:
-        resend_verification_email(db, req.email, background_tasks)
-        return {"message": "Verification email resent."}
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        logger.error(f"Error in /resend-verification: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal Server Error",
-        )
-
+# ✅ Test route to verify user (for testing only)
 @router.get("/verify-test/{username}")
 def verify_test_user(username: str, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == username).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
     user.is_verified = True
     db.commit()
-    return {"msg": f"User {username} verified for testing"}
+    return {"msg": f"User '{username}' verified successfully for testing."}

@@ -10,12 +10,11 @@ from .hobby import Hobby
 from .important_dates import ImportantDate
 from .marital_info import MaritalInfo
 from .medical_info import MedicalInfo
-from .motivation import MotivationBase
+from .motivation import Motivation     # Corrected from MotivationBase to Motivation (SQLAlchemy model)
 from .notification import Notification
 from .other_information import OtherInformation
 from .past_incidents import PastIncident
-from .reminder import relationship
-from .tracking import Tracking
 from .reminder import Reminder
-
-# No Base import or definition here!
+from .tracking import Tracking
+from .user_profile import UserProfile
+from .email_verification import EmailVerification

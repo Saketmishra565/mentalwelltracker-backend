@@ -1,23 +1,13 @@
-from pydantic import BaseModel
-from typing import Optional
+from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
 from app.models.base import Base
-from sqlalchemy import Column, Integer, String
-
-class MotivationBase(BaseModel):
-    quote: str
-    author: str
-
-class MotivationCreate(MotivationBase):
-    pass
 
 class Motivation(Base):
     __tablename__ = "motivations"
+
     id = Column(Integer, primary_key=True, index=True)
     quote = Column(String, index=True)
     author = Column(String)
+    user_id = Column(Integer, ForeignKey("users.id"))
 
-class MotivationRead(MotivationBase):
-    id: int
-
-    class Config:
-       from_attributes = True
+    user = relationship("User", back_populates="motivation")

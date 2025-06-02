@@ -1,17 +1,6 @@
-from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import date
-
-# After signup
-class SignupResponse(BaseModel):
-    message: str
-    email: EmailStr
-
-class VerifyRequest(BaseModel):
-    token: str
-
-class ResendRequest(BaseModel):
-    email: EmailStr
+from pydantic import BaseModel, EmailStr
 
 
 class EducationInfo(BaseModel):
@@ -22,6 +11,7 @@ class EducationInfo(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class ImportantDate(BaseModel):
     event_name: Optional[str]
@@ -84,39 +74,18 @@ class UserBase(BaseModel):
     username: str
     email: EmailStr
 
+
 class UserCreate(BaseModel):
+    username: str
     email: EmailStr
     password: str
+
 
 class UserUpdate(BaseModel):
     username: Optional[str] = None
     email: Optional[EmailStr] = None
     password: Optional[str] = None
 
-    # Additional optional fields
-    full_name: Optional[str] = None
-    date_of_birth: Optional[date] = None
-    gender: Optional[str] = None
-    address: Optional[str] = None
-
-    family_information: Optional[FamilyInfo] = None
-    occupation_information: Optional[OccupationInfo] = None
-    hobbies: Optional[List[str]] = None
-    skills: Optional[List[str]] = None
-    favorite_work: Optional[str] = None
-    daily_routine: Optional[DailyRoutine] = None
-    favorite_food: Optional[List[str]] = None
-    medical_information: Optional[MedicalInfo] = None
-    education_information: Optional[List[EducationInfo]] = None
-    past_incidents: Optional[List[str]] = None
-    marital_information: Optional[MaritalInfo] = None
-    current_issues: Optional[List[str]] = None
-    current_challenges: Optional[List[str]] = None
-    important_dates: Optional[List[ImportantDate]] = None
-    other_information: Optional[str] = None
-
-    class Config:
-        from_attributes = True
 
 class UserRead(UserBase):
     id: int
@@ -125,17 +94,18 @@ class UserRead(UserBase):
     gender: Optional[str]
     address: Optional[str]
 
-    family_information: Optional[FamilyInfo]
-    occupation_information: Optional[OccupationInfo]
+    family_info: Optional[FamilyInfo]
+    occupation_info: Optional[OccupationInfo]
+    medical_info: Optional[MedicalInfo]
+    education_info: Optional[List[EducationInfo]]
+    marital_info: Optional[MaritalInfo]
+
     hobbies: Optional[List[str]]
     skills: Optional[List[str]]
     favorite_work: Optional[str]
     daily_routine: Optional[DailyRoutine]
     favorite_food: Optional[List[str]]
-    medical_information: Optional[MedicalInfo]
-    education_information: Optional[List[EducationInfo]]
     past_incidents: Optional[List[str]]
-    marital_information: Optional[MaritalInfo]
     current_issues: Optional[List[str]]
     current_challenges: Optional[List[str]]
     important_dates: Optional[List[ImportantDate]]
@@ -144,3 +114,24 @@ class UserRead(UserBase):
     class Config:
         from_attributes = True
 
+
+class SignupResponse(BaseModel):
+    message: str
+    email: EmailStr
+
+
+class VerifyRequest(BaseModel):
+    token: str
+
+
+class ResendRequest(BaseModel):
+    email: EmailStr
+
+
+class OTPSendRequest(BaseModel):
+    email: EmailStr
+
+
+class OTPVerifyRequest(BaseModel):
+    email: EmailStr
+    otp: str

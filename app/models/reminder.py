@@ -4,6 +4,7 @@ from app.models.base import Base
 
 class Reminder(Base):
     __tablename__ = "reminders"
+
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
     message = Column(String)

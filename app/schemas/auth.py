@@ -1,35 +1,28 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, constr
+from typing import Annotated
 
+class UserRegister(BaseModel):
+    username: Annotated[str, constr(min_length=3, max_length=50)]
+    email: EmailStr
+    password: Annotated[str, constr(min_length=6)]
 
 class UserLogin(BaseModel):
     username: str
     password: str
 
-
-class UserRegister(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50)
-    email: EmailStr
-    password: str = Field(..., min_length=6)
-
-
 class ResetPassword(BaseModel):
     email: EmailStr
-    new_password: str = Field(..., min_length=6)
+    new_password: Annotated[str, constr(min_length=6)]
 
-
-class Token(BaseModel):
+class TokenSchema(BaseModel):
     access_token: str
-    token_type: str = "bearer"
-
-
-class TokenData(BaseModel):
-    username: str | None = None  # For verifying token payload
-
+    refresh_token: str
+    token_type: str
+    message: str = None
 
 class LoginResponse(BaseModel):
     access_token: str
-    token_type: str = "bearer"
-    username: str
+    token_type: str
 
-    class Config:
-        from_attributes = True
+class VerifyRequest(BaseModel):
+    token: str

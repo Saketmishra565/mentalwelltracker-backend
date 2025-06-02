@@ -11,6 +11,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from app.database import engine  # Your SQLAlchemy engine
 from app.models.base import Base  # Your declarative base metadata
 from app.database import SQLALCHEMY_DATABASE_URL
+from app.models import user
+from app.database import Base
+from app.models import email_verification
 
 # Alembic Config object, provides access to .ini config file values
 config = context.config
