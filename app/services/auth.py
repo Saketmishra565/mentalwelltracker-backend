@@ -14,7 +14,7 @@ def register_user(db: Session, username: str, email: str, password: str) -> User
         raise HTTPException(status_code=400, detail="Username or email already registered")
 
     hashed_password = hash_password(password)
-    user = User(username=username, email=email, password=hashed_password)
+    user = User(username=username, email=email, hashed_password=hashed_password)
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -25,7 +25,7 @@ def login_user(db: Session, username: str, password: str):
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect username or password")
 
-    if not verify_password(password, user.password):
+    if not verify_password(password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -45,6 +45,6 @@ def reset_password(db: Session, email: str, new_password: str):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    user.password = hash_password(new_password)
+    user.hashed_password = hash_password(new_password)
     db.commit()
     return {"msg": "Password reset successfully"}

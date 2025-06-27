@@ -10,6 +10,9 @@ from app.routers.tracking import router as tracking_router
 from app.utils.config import settings
 from app.database import Base, engine
 import app.models
+from app.settings.routers import router as settings_router
+
+app = FastAPI()
 
 load_dotenv()  # .env file load karta hai
 
@@ -22,7 +25,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(title="My FastAPI App", version="1.0.0")
 
 origins = [
-    "http://localhost:8000",  # React frontend URL
+    "*"  # React frontend URL
 ]
 
 app.add_middleware(
@@ -56,6 +59,7 @@ app.include_router(reminders.router)
 app.include_router(motivation.router)
 app.include_router(notifications.router)
 app.include_router(tracking_router)
+app.include_router(settings_router) 
 
 @app.get("/")
 def root():

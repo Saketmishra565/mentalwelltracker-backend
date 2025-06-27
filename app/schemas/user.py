@@ -85,8 +85,30 @@ class UserUpdate(BaseModel):
     username: Optional[str] = None
     email: Optional[EmailStr] = None
     password: Optional[str] = None
+    full_name: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    gender: Optional[str] = None
+    address: Optional[str] = None
 
+    family_info: Optional[FamilyInfo] = None
+    occupation_info: Optional[OccupationInfo] = None
+    medical_info: Optional[MedicalInfo] = None
+    education_info: Optional[List[EducationInfo]] = None
+    marital_info: Optional[MaritalInfo] = None
 
+    hobbies: Optional[List[str]] = None
+    skills: Optional[List[str]] = None
+    favorite_work: Optional[str] = None
+    daily_routine: Optional[DailyRoutine] = None
+    favorite_food: Optional[List[str]] = None
+    past_incidents: Optional[List[str]] = None
+    current_issues: Optional[List[str]] = None
+    current_challenges: Optional[List[str]] = None
+    important_dates: Optional[List[ImportantDate]] = None
+    other_information: Optional[str] = None
+
+    class Config:
+        from_attributes = True
 class UserRead(UserBase):
     id: int
     full_name: Optional[str]

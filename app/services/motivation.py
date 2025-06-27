@@ -1,12 +1,17 @@
+from app.models.motivation import Motivation
 from sqlalchemy.orm import Session
+from app.schemas.motivation import MotivationCreate
 
-def add_quote(db: Session, data):
-    from app.models.motivation import Motivation
-    quote = Motivation(**data.dict())
-    db.add(quote)
+def add_quote(db: Session, quote_data: MotivationCreate, user_id: int):
+    new_quote = Motivation(
+        quote=quote_data.quote,
+        author=quote_data.author,
+        user_id=user_id
+    )
+    db.add(new_quote)
     db.commit()
-    db.refresh(quote)
-    return quote
+    db.refresh(new_quote)
+    return new_quote
 
 def get_all_quotes(db: Session):
     from app.models.motivation import Motivation

@@ -15,9 +15,14 @@ from app.services.motivation import (
 router = APIRouter(prefix="/motivation", tags=["Motivation"])
 
 # CREATE
-@router.post("/", response_model=MotivationRead, status_code=status.HTTP_201_CREATED)
-def add_motivational_quote(quote: MotivationCreate, db: Session = Depends(get_db)):
-    return add_quote(db, quote)
+@router.post("/", response_model=MotivationRead)
+def add_motivational_quote(
+    quote: MotivationCreate,
+    db: Session = Depends(get_db),
+    current_user_id: int = 1  # Replace with actual user from auth
+):
+    return add_quote(db, quote, user_id=current_user_id)
+
 
 # READ ALL
 @router.get("/", response_model=List[MotivationRead])

@@ -10,4 +10,4 @@ class Motivation(Base):
     author = Column(String)
     user_id = Column(Integer, ForeignKey("users.id"))
 
-    user = relationship("User", back_populates="motivation")
+    user = relationship("User", back_populates="motivations")

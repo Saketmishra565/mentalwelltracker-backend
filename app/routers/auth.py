@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
+from urllib.parse import unquote
 from datetime import timedelta
 import logging
 
@@ -11,19 +12,25 @@ from app.schemas.auth import (
     TokenSchema,
 )
 from app.schemas.user import VerifyRequest
-from app.services.auth import login_user, register_user, reset_password
+from app.services.auth import (
+    login_user,
+    register_user,
+    reset_password  
+)
 from app.services.verification import create_otp_and_send_email, verify_otp
 from app.database import get_db
 from app.models.user import User
 from app.auth.jwt import create_access_token, create_refresh_token
 
+# ✅ Router Setup with Prefix
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 logger = logging.getLogger(__name__)
 
+# ✅ Token Expiry Constants
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 
-# ✅ Register
+# ✅ Register Route
 @router.post("/register", response_model=TokenSchema, status_code=status.HTTP_201_CREATED)
 def register(
     data: UserRegister,
@@ -36,10 +43,10 @@ def register(
         # Send OTP via email
         create_otp_and_send_email(db, user.email, background_tasks)
 
-        # Tokens
+        # Generate tokens
         access_token = create_access_token(
-        data={"sub": user.email},
-        expires_delta=timedelta(minutes=30)  # 30 minutes expiry token
+            data={"sub": user.email},
+            expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
         )
         refresh_token = create_refresh_token(
             data={"sub": user.email},
@@ -59,8 +66,7 @@ def register(
         logger.error(f"Error in /register: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-
-# ✅ Login
+# ✅ Login Route
 @router.post("/login", response_model=LoginResponse)
 def login(data: UserLogin, db: Session = Depends(get_db)):
     try:
@@ -71,8 +77,7 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
         logger.error(f"Error in /login: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-
-# ✅ Reset Password
+# ✅ Reset Password Route
 @router.post("/reset-password", status_code=status.HTTP_200_OK)
 def reset_user_password(data: ResetPassword, db: Session = Depends(get_db)):
     try:
@@ -83,8 +88,7 @@ def reset_user_password(data: ResetPassword, db: Session = Depends(get_db)):
         logger.error(f"Error in /reset-password: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-
-# ✅ Verify OTP (token format: "email:otp")
+# ✅ Verify OTP
 @router.post("/verify-otp")
 def verify_email_otp(data: VerifyRequest, db: Session = Depends(get_db)):
     try:
@@ -102,14 +106,15 @@ def verify_email_otp(data: VerifyRequest, db: Session = Depends(get_db)):
         logger.error(f"Error in /verify-otp: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail=str(e))
 
-
-# ✅ Test route to verify user (for testing only)
-@router.get("/verify-test/{username}")
-def verify_test_user(username: str, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == username).first()
+# ✅ Testing Route for Verification
+@router.get("/verify-test-by-email/{email}")
+def verify_test_email(email: str, db: Session = Depends(get_db)):
+    email = unquote(email)
+    user = db.query(User).filter(User.email == email).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
     user.is_verified = True
     db.commit()
-    return {"msg": f"User '{username}' verified successfully for testing."}
+    return {"msg": f"User with email '{email}' verified successfully for testing."}
+
